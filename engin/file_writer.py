@@ -10,7 +10,7 @@ class FileWriter:
 
     def writing(self):
         file_name = os.path.join('log_data')
-        data = {str(self.data[-1]): self.data[:-2]}
+        data = {str(self.data.pop()): self.data}
         with open(file_name, 'a') as f:
             json.dump(data, f, indent=2)
 
