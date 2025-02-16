@@ -12,7 +12,6 @@ class KeyLoggerService:
         self.key_buffer = []
         self.lock = threading.Lock()
         self.run_time = run_time
-        self.start_monitoring()
 
 
     def start_monitoring(self):

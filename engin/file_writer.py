@@ -9,17 +9,17 @@ class FileWriter:
         self.writing()
 
     def writing(self):       
-        file_name = os.path.join(f'log_data {self.data[-1]}.json')
+        file_name = os.path.join(f'log_data {self.data.pop()} .json')
         
         try:
            with open(file_name, "r") as f:
               data = json.load(f)
 
-        except :
+        except FileNotFoundError:
            data = {}
 
-        key = str(self.data[-2])
-        value = self.data[:-2]
+        key = str(self.data.pop())
+        value = self.data
         data[key] = value
 
         with open(file_name, "w") as f:
