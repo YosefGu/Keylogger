@@ -1,9 +1,9 @@
 from flask import Flask
-from routes import routs
+from routes import routes
 
 app = Flask(__name__)
 
-app.register_blueprint(routs)
+app.register_blueprint(routes)
 
 if __name__ == '__main__':
     
