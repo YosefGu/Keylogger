@@ -58,7 +58,8 @@ def get_machine_data(id):
         with open(file_path, 'r') as f:
             file_data = json.load(f)
             for key in file_data:
-                data.append(''.join(file_data[key]))
+                decrypted_list = xor_decryption(file_data[key])
+                data.append(decrypted_list) 
     return {"data": data}, 200
   
 
@@ -74,3 +75,14 @@ def get_status(mac):
     with open(f'{backend_path}/machins.json', 'w') as f:
         json.dump(old_data, f, indent=4)
     return {'commend' : False}
+
+def xor_decryption(data):
+    password = 42
+    xored_string = ""
+    for char in data:
+        if char == " ":
+            xored_string += " "
+        else:    
+            xored_character = ord(char) ^ password
+            xored_string += chr(xored_character)
+    return xored_string
