@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,jsonify
 import os
 import json
 from datetime import datetime
@@ -46,10 +46,10 @@ def send_data():
 def get_machines():
     with open(f'{backend_path}/machins.json') as f:
         data = json.load(f)
-    return list(data.keys())
+    return {"machines" : list(data.keys())}
 
 # get machine data
-@routes.route('/machine/<id>', methods=['GET'])
+@routes.route('/machine/<id>', methods=['POST'])
 def get_machine_data(id):
     files = os.listdir(f'{backend_path}/data/{id}')
     data = []
@@ -62,15 +62,38 @@ def get_machine_data(id):
     return {"data": data}, 200
   
 
-# check for status machin
-@routes.route('/ping/<mac>', methods=['GET'])
+# check for status machine
+@routes.route('/ping/<mac>', methods=['POST'])
 def get_status(mac):
-    with open(f'{backend_path}/machins.json', 'r') as f:
-        old_data = json.load(f)
-    if mac in old_data:
-        return {'commend' : old_data[mac]['status']}
+    file_path = f'{backend_path}/machins.json'
+    try:
+        with open(file_path, 'r') as f:
+            machines = json.load(f)
+    except FileNotFoundError:
+        machines = {}
+
+    return {'commend': machines.get(mac, {}).get('status', False)}
+
+# updating of status machine
+@routes.route('/update-status', methods=['POST'])
+def update_status():
+    mac = request.json.get('mac')
+    status = request.json.get('status')
+
+    file_path = f'{backend_path}/machins.json'
     
-    old_data[mac] = {'status': False}
-    with open(f'{backend_path}/machins.json', 'w') as f:
-        json.dump(old_data, f, indent=4)
-    return {'commend' : False}
+    try:
+        with open(file_path, 'r') as f:
+            machines = json.load(f)
+    except FileNotFoundError:
+        machines = {}
+
+    if mac in machines:
+        machines[mac]['status'] = status
+    else:
+        machines[mac] = {'status': status}
+
+    with open(file_path, 'w') as f:
+        json.dump(machines, f, indent=2)
+    
+    return jsonify({'message': f'Status updated for {mac}'}), 200
