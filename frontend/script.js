@@ -1,9 +1,8 @@
-
-const url =
-
+require('dotenv').config();
+const url = process.env.API_UR
 
 function fetchMachines() {
-    fetch('http://127.0.0.1:5000/machines')
+    fetch(url/machines)
     .then(response => response.json())
     .then(data => {console.log("Received machines",data);
      updateMachineSelects(data.machines);})
@@ -27,7 +26,7 @@ function updateMachineSelects(machines) {
 }
 
 function  updateMachineStatus(machine,status) {
-    fetch('http://127.0.0.1:5000/update-status',{
+    fetch(url/update-status,{
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({mac:machine , status:status})
