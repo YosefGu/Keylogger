@@ -1,8 +1,9 @@
-from flask import Blueprint, request
 import os
 import json
+from flask import Blueprint, request
 from datetime import datetime
 from dotenv import load_dotenv
+
 
 load_dotenv()
 backend_path = os.getenv('ROOT_PATH')
@@ -11,7 +12,7 @@ routes = Blueprint('Routes', __name__)
 
 # sava data on serevr machine
 @routes.route('/send-data', methods=['POST'])
-def send_data():
+def save_data():
     mac = request.json.get('mac')
     data = request.json.get('data')
 
@@ -74,3 +75,51 @@ def get_status(mac):
     with open(f'{backend_path}/machins.json', 'w') as f:
         json.dump(old_data, f, indent=4)
     return {'commend' : False}
+
+# get data by date and time
+@routes.route('/machine-time/<mac>', methods=['GET'])
+def get_data_by_date(mac):
+    machine = mac
+    start_date = request.json.get('start_date')
+    end_date = request.json.get('end_date')
+    start_time = request.json.get('start_time')
+    end_time = request.json.get('end_time')
+    
+    # converting string to datetime object
+    start_date = datetime.strptime(start_date,"%Y-%m-%d").date()
+    end_date = datetime.strptime(end_date,"%Y-%m-%d").date()
+    start_time = datetime.strptime(start_time, "%H:%M:%S").time()
+    end_time = datetime.strptime(end_time, "%H:%M:%S").time()
+
+    # filtering files by date
+    all_files = os.listdir(f'{backend_path}/data/{machine}')
+    files_in_range = []
+    for file in all_files:
+        try:
+            file_date = datetime.strptime(file.replace(".json",""), "%Y-%m-%d").date()
+            if start_date <= file_date <= end_date:
+                files_in_range.append(file)
+        except ValueError:
+            continue
+
+    
+    # adding data maching to time start and end
+    data = []
+    for file in files_in_range:
+        file_date = datetime.strptime(file.replace(".json",""), "%Y-%m-%d").date()
+
+        file_path = f'{backend_path}/data/{machine}/{file}'
+        with open(file_path, 'r') as f:
+            file_data = json.load(f)
+            for key in file_data:
+                key_time = datetime.strptime(key, "%H:%M:%S").time()
+                if file_date == start_date:
+                    if key_time >= start_time:
+                        data.append(''.join(file_data[key]))
+                elif file_data == end_date:
+                    if key_time <= end_time:
+                        data.append(''.join(file_data[key]))
+                else:
+                    data.append(''.join(file_data[key]))
+    return {"data": data}
+  
