@@ -49,7 +49,7 @@ def get_machines():
     return {"machines" : list(data.keys())}
 
 # get machine data
-@routes.route('/machine/<id>', methods=['POST'])
+@routes.route('/machine/<id>', methods=['GET'])
 def get_machine_data(id):
     files = os.listdir(f'{backend_path}/data/{id}')
     data = []
@@ -63,16 +63,17 @@ def get_machine_data(id):
   
 
 # check for status machine
-@routes.route('/ping/<mac>', methods=['POST'])
+@routes.route('/ping/<mac>', methods=['GET'])
 def get_status(mac):
-    file_path = f'{backend_path}/machins.json'
-    try:
-        with open(file_path, 'r') as f:
-            machines = json.load(f)
-    except FileNotFoundError:
-        machines = {}
-
-    return {'commend': machines.get(mac, {}).get('status', False)}
+    with open(f'{backend_path}/machins.json', 'r') as f:
+        old_data = json.load(f)
+    if mac in old_data:
+        return {'commend' : old_data[mac]['status']}
+    
+    old_data[mac] = {'status': False}
+    with open(f'{backend_path}/machins.json', 'w') as f:
+        json.dump(old_data, f, indent=4)
+    return {'commend' : False}
 
 # updating of status machine
 @routes.route('/update-status', methods=['POST'])
