@@ -1,5 +1,6 @@
 {
-    "04,ec,d8,1f,59,54": {
-        "status": false
-    }
+  "04,ec,d8,1f,59,54": {
+    "status": false,
+    "timer": 0
+  }
 }

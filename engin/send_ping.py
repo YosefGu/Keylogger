@@ -15,7 +15,7 @@ class SendPing:
         try:
             response = requests.get(f'{self.url}/ping/{self.mac}')
             response.raise_for_status()
-            return response.json()['commend']
+            return response.json()['commend'], response.json()['timer']
         except Exception as error:
             print(f"An error occurred: {error}")
             
