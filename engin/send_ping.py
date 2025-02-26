@@ -13,5 +13,5 @@ class SendPing:
 
     def send(self):
         response = requests.get(f'{self.url}/ping/{self.mac}')
-        return response.json()['commend']
+        return response.json()['commend'], response.json()['timer'] 
     
