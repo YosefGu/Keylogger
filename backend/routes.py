@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -39,7 +39,7 @@ def save_data():
     # status machin - check for commend to stop
     with open(f'{backend_path}/machins.json') as f:
         machins = json.load(f)
-    return {'commend': machins[mac]['status']}, 200
+    return {'commend': machins[mac]['status'],'timer': machins[mac]['timer']}, 200
 
 
 # get machines name
@@ -50,16 +50,17 @@ def get_machines():
     return list(data.keys())
 
 # get machine data
-@routes.route('/machine/<id>', methods=['GET'])
-def get_machine_data(id):
-    files = os.listdir(f'{backend_path}/data/{id}')
+@routes.route('/machine/<mac>', methods=['GET'])
+def get_machine_data(mac):
+    files = os.listdir(f'{backend_path}/data/{mac}')
     data = []
     for file in files:
-        file_path = f'{backend_path}/data/{id}/{file}'
+        file_path = f'{backend_path}/data/{mac}/{file}'
         with open(file_path, 'r') as f:
             file_data = json.load(f)
             for key in file_data:
                 data.append(''.join(file_data[key]))
+                
     return {"data": data}, 200
   
 
@@ -69,12 +70,12 @@ def get_status(mac):
     with open(f'{backend_path}/machins.json', 'r') as f:
         old_data = json.load(f)
     if mac in old_data:
-        return {'commend' : old_data[mac]['status']}
+        return {'commend' : old_data[mac]['status'], 'timer' : old_data[mac]['timer']}
     
-    old_data[mac] = {'status': False}
+    old_data[mac] = {'status': False,'timer': 0}
     with open(f'{backend_path}/machins.json', 'w') as f:
         json.dump(old_data, f, indent=4)
-    return {'commend' : False}
+    return {'commend' : False, 'timer': 0}
 
 # get data by date and time
 @routes.route('/machine-time/<mac>', methods=['GET'])
@@ -123,3 +124,28 @@ def get_data_by_date(mac):
                     data.append(''.join(file_data[key]))
     return {"data": data}
   
+
+# updating of status and time machine
+@routes.route('/update-status/<mac>', methods=['POST'])
+def update_status(mac):
+    mac = mac
+    status = request.json.get('status')
+    timer = request.json.get('timer')
+
+    file_path = f'{backend_path}/machins.json'
+    
+    try:
+        with open(file_path, 'r') as f:
+            machines = json.load(f)
+    except FileNotFoundError:
+        machines = {}
+
+    if mac in machines:
+        machines[mac]['status'] = status
+        machines[mac]['timer'] = timer
+    else:
+        machines[mac] = {'status': status, 'timer': 0}
+    with open(file_path, 'w') as f:
+        json.dump(machines, f, indent=2)
+    
+    return jsonify({'message': f'Status updated for {mac}'}), 200
