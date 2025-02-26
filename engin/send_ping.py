@@ -12,6 +12,11 @@ class SendPing:
         self.mac = ','.join(['{:02x}'.format((uuid.getnode() >> i) & 0xff) for i in range(0, 48, 8)][::-1])
 
     def send(self):
-        response = requests.get(f'{self.url}/ping/{self.mac}')
-        return response.json()['commend'], response.json()['timer'] 
-    
+        try:
+            response = requests.get(f'{self.url}/ping/{self.mac}')
+            response.raise_for_status()
+            return response.json()['commend'], response.json()['timer']
+        except Exception as error:
+            print(f"An error occurred: {error}")
+            
+            

@@ -47,7 +47,7 @@ def save_data():
 def get_machines():
     with open(f'{backend_path}/machins.json') as f:
         data = json.load(f)
-    return list(data.keys())
+    return {"machines" : list(data.keys())}
 
 # get machine data
 @routes.route('/machine/<mac>', methods=['GET'])
@@ -59,12 +59,12 @@ def get_machine_data(mac):
         with open(file_path, 'r') as f:
             file_data = json.load(f)
             for key in file_data:
-                data.append(''.join(file_data[key]))
-                
+                decrypted_list = xor_decryption(file_data[key])
+                data.append(decrypted_list) 
     return {"data": data}, 200
   
 
-# check for status machin
+# check for status machine
 @routes.route('/ping/<mac>', methods=['GET'])
 def get_status(mac):
     with open(f'{backend_path}/machins.json', 'r') as f:
@@ -77,6 +77,45 @@ def get_status(mac):
         json.dump(old_data, f, indent=4)
     return {'commend' : False, 'timer': 0}
 
+
+def xor_decryption(data):
+    password = 42
+    xored_string = ""
+    for char in data:
+        if char == " ":
+            xored_string += " "
+        else:    
+            xored_character = ord(char) ^ password
+            xored_string += chr(xored_character)
+    return xored_string
+
+  
+# updating of status and time machine
+@routes.route('/update-status/<mac>', methods=['POST'])
+def update_status(mac):
+    mac = mac
+    status = request.json.get('status')
+    timer = request.json.get('timer')
+
+    file_path = f'{backend_path}/machins.json'
+    
+    try:
+        with open(file_path, 'r') as f:
+            machines = json.load(f)
+    except FileNotFoundError:
+        machines = {}
+
+    if mac in machines:
+        machines[mac]['status'] = status
+        machines[mac]['timer'] = timer
+    else:
+        machines[mac] = {'status': status, 'timer': 0}
+    with open(file_path, 'w') as f:
+        json.dump(machines, f, indent=2)
+    
+    return jsonify({'message': f'Status updated for {mac}'}), 200
+  
+  
 # get data by date and time
 @routes.route('/machine-time/<mac>', methods=['GET'])
 def get_data_by_date(mac):
@@ -104,7 +143,10 @@ def get_data_by_date(mac):
             continue
 
     
-    # adding data maching to time start and end
+    # adding data maching to time start and end   
+
+
+      
     data = []
     for file in files_in_range:
         file_date = datetime.strptime(file.replace(".json",""), "%Y-%m-%d").date()
@@ -116,36 +158,12 @@ def get_data_by_date(mac):
                 key_time = datetime.strptime(key, "%H:%M:%S").time()
                 if file_date == start_date:
                     if key_time >= start_time:
-                        data.append(''.join(file_data[key]))
-                elif file_data == end_date:
+                        data.append(file_data[key])
+                elif file_date == end_date:
                     if key_time <= end_time:
-                        data.append(''.join(file_data[key]))
+                        data.append(file_data[key])
                 else:
-                    data.append(''.join(file_data[key]))
+                    data.append(file_data[key])
     return {"data": data}
   
 
-# updating of status and time machine
-@routes.route('/update-status/<mac>', methods=['POST'])
-def update_status(mac):
-    mac = mac
-    status = request.json.get('status')
-    timer = request.json.get('timer')
-
-    file_path = f'{backend_path}/machins.json'
-    
-    try:
-        with open(file_path, 'r') as f:
-            machines = json.load(f)
-    except FileNotFoundError:
-        machines = {}
-
-    if mac in machines:
-        machines[mac]['status'] = status
-        machines[mac]['timer'] = timer
-    else:
-        machines[mac] = {'status': status, 'timer': 0}
-    with open(file_path, 'w') as f:
-        json.dump(machines, f, indent=2)
-    
-    return jsonify({'message': f'Status updated for {mac}'}), 200
