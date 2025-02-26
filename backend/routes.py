@@ -142,7 +142,10 @@ def get_data_by_date(mac):
             continue
 
     
-    # adding data maching to time start and end
+    # adding data maching to time start and end   
+
+
+      
     data = []
     for file in files_in_range:
         file_date = datetime.strptime(file.replace(".json",""), "%Y-%m-%d").date()
@@ -154,12 +157,12 @@ def get_data_by_date(mac):
                 key_time = datetime.strptime(key, "%H:%M:%S").time()
                 if file_date == start_date:
                     if key_time >= start_time:
-                        data.append(''.join(file_data[key]))
-                elif file_data == end_date:
+                        data.append(file_data[key])
+                elif file_date == end_date:
                     if key_time <= end_time:
-                        data.append(''.join(file_data[key]))
+                        data.append(file_data[key])
                 else:
-                    data.append(''.join(file_data[key]))
+                    data.append(file_data[key])
     return {"data": data}
   
 
