@@ -114,12 +114,13 @@ document.getElementById('show-button').addEventListener('click', function () {
     .then(response => response.json())
     .then(data => {
         const machineDataDiv = document.getElementById('machine-data')
-        if (data.data) {
+        if (data.data && data.data.length > 0) {
             machineDataDiv.innerHTML = `<p>${data.data.join(' ')}</p>`;
             machineDataDiv.style.display = 'block';
 
         } else {
-            alert("No data received or invalid response");
+            machineDataDiv.innerHTML = `<p>no data</p>`;
+            machineDataDiv.style.display = 'block'
         }
     })
     .catch(error => console.error('Error fetching machine data:', error));
