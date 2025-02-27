@@ -1,6 +1,14 @@
 {
   "e2,c4,e7,ac,27,f2": {
-    "status": true,
+    "status": false,
+    "timer": 0
+  },
+  "04,ec,d8,1f,59,54": {
+    "status": false,
+    "timer": 0
+  },
+  "00,bb,60,55,0f,6d": {
+    "status": false,
     "timer": 0
   }
 }
