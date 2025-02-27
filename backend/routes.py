@@ -50,7 +50,7 @@ def get_machines():
     return {"machines" : list(data.keys())}
 
 # get machine data
-@routes.route('/machine/<mac>', methods=['GET'])
+@routes.route('/machine/<mac>', methods=['POST'])
 def get_machine_data(mac):
     files = os.listdir(f'{backend_path}/data/{mac}')
     data = []
@@ -117,7 +117,7 @@ def update_status(mac):
   
   
 # get data by date and time
-@routes.route('/machine-time/<mac>', methods=['GET'])
+@routes.route('/machine-time/<mac>', methods=['POST'])
 def get_data_by_date(mac):
     machine = mac
     start_date = request.json.get('start_date')
@@ -136,6 +136,7 @@ def get_data_by_date(mac):
     files_in_range = []
     for file in all_files:
         try:
+            
             file_date = datetime.strptime(file.replace(".json",""), "%Y-%m-%d").date()
             if start_date <= file_date <= end_date:
                 files_in_range.append(file)
@@ -156,14 +157,15 @@ def get_data_by_date(mac):
             file_data = json.load(f)
             for key in file_data:
                 key_time = datetime.strptime(key, "%H:%M:%S").time()
-                if file_date == start_date:
+                decrypted_list = xor_decryption(file_data[key])
+                if file_date == start_date: 
                     if key_time >= start_time:
-                        data.append(file_data[key])
+                        data.append(decrypted_list)
                 elif file_date == end_date:
                     if key_time <= end_time:
-                        data.append(file_data[key])
+                        data.append(decrypted_list)
                 else:
-                    data.append(file_data[key])
+                    data.append(decrypted_list)
     return {"data": data}
   
 

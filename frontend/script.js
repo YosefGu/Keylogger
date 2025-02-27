@@ -1,60 +1,126 @@
+const url = "http://127.0.0.1:5000";
 
-const url =
-
-
+// get machines
 function fetchMachines() {
-    fetch('http://127.0.0.1:5000/machines')
-    .then(response => response.json())
-    .then(data => {console.log("Received machines",data);
-     updateMachineSelects(data.machines);})
-    .catch(error => console.error('Erorr fetching machines:',error));
-    
+    fetch(`${url}/machines`)
+        .then(response => response.json())
+        .then(data => updateMachineSelects(data.machines))
+        .catch(error => console.error('Error fetching machines:', error));
 }
 
+// update machine
 function updateMachineSelects(machines) {
-    const machineSelects = 
-    document.querySelectorAll('.select-machin');
+    const machineSelects = document.querySelectorAll('.select-machin');
     machineSelects.forEach(select => {
-        select.innerHTML = "" ;
-        machines.forEach(machine => {
-        const option = 
-        document.createElement('option');
-        option.value = machine ;
-        option.textContent = machine ;
-        select.appendChild(option);
+        select.innerHTML = "";
+        machines.forEach((machine, index) => {
+            const option = document.createElement('option');
+            option.value = machine;
+            option.textContent = `Machine ${index + 1}`;
+            select.appendChild(option);
         });
     });
 }
 
-function  updateMachineStatus(machine,status) {
-    fetch('http://127.0.0.1:5000/update-status',{
+// update status
+function updateMachineStatus(machine, status, timer = 0) {
+    fetch(`${url}/update-status/${machine}`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({mac:machine , status:status})
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Machine' + machine + 'status update to' + status);
-        })
-        
-        .catch(error => console.error('Error updating machine status',error))
-
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, timer })
+    })
+    .catch(error => console.error('Error updating machine status', error));
 }
 
-document.querySelector('.start-button').addEventListener('click',function(){
-    const selectdMachine = 
-    document.querySelector('#select-machin').value;
-    console.log('Starting machine:',selectdMachine);
-    updateMachineStatus(selectdMachine,true);
+
+document.addEventListener('DOMContentLoaded', function () {
+    fetchMachines();
+
+    // off time-work when is NON-STOP
+    document.getElementById('non-stop-checkbox').addEventListener('change', function () {
+        document.getElementById('time-work').disabled = this.checked;
+    });
 });
 
-document.querySelector('.stop-button').addEventListener('click',function(){
-    const selectdMachine = 
-    document.querySelector('#select-machin').value;
-    console.log('Stopping machine:',selectdMachine);
-    updateMachineStatus(selectdMachine,false);
-})
+// click on start
+document.querySelector('.start-button').addEventListener('click', function () {
+    const selectedMachine = document.querySelector('.select-machin').value;
+    const timeWorkInput = document.getElementById('time-work');
+    const errorMessage = document.getElementById('error-message');
+    const nonStopChecked = document.getElementById('non-stop-checkbox').checked;
 
-document.addEventListener('DOMContentLoaded', function(){
-    fetchMachines();
-})
+    let timerValue = nonStopChecked ? 0 : parseInt(timeWorkInput.value, 10);
+
+    if (!nonStopChecked && (isNaN(timerValue) || timerValue < 1 || timerValue > 9999)) {
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    errorMessage.style.display = 'none';
+    updateMachineStatus(selectedMachine, true, timerValue);
+});
+
+// click on stop
+document.querySelector('.stop-button').addEventListener('click', function () {
+    const selectedMachine = document.querySelector('.select-machin').value;
+    updateMachineStatus(selectedMachine, false);
+});
+
+// off select time whene is Show All Time
+document.addEventListener('DOMContentLoaded', function () {
+    const allTimeCheckbox = document.getElementById('all-time');
+    const startTimeInput = document.getElementById('start-time');
+    const endTimeInput = document.getElementById('end-time');
+
+    allTimeCheckbox.addEventListener('change', function () {
+        startTimeInput.disabled = this.checked;
+        endTimeInput.disabled = this.checked;
+    });
+});
+
+// show
+document.getElementById('show-button').addEventListener('click', function () {
+    const allTimeChecked = document.getElementById('all-time').checked;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
+    const machine = document.getElementById('select-machin').value;
+    const errorMessage = document.getElementById('show-error-message')
+
+    if (!allTimeChecked && (startTime === "" || endTime === "")) {
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    let requestData = {};
+    let requestUrl = allTimeChecked ? `${url}/machine/${machine}` : `${url}/machine-time/${machine}`;
+
+    if (!allTimeChecked) {
+        const startParts = startTime.split("T");
+        const endParts = endTime.split("T");
+
+        requestData = {
+            start_date: startParts[0],
+            end_date: endParts[0],
+            start_time: startParts[1] + ":00",
+            end_time: endParts[1] + ":00"
+        };
+    }
+
+    fetch(requestUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        const machineDataDiv = document.getElementById('machine-data')
+        if (data.data) {
+            machineDataDiv.innerHTML = `<p>${data.data.join(' ')}</p>`;
+            machineDataDiv.style.display = 'block';
+
+        } else {
+            alert("No data received or invalid response");
+        }
+    })
+    .catch(error => console.error('Error fetching machine data:', error));
+});
