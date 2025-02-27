@@ -52,7 +52,11 @@ def get_machines():
 # get machine data
 @routes.route('/machine/<mac>', methods=['POST'])
 def get_machine_data(mac):
-    files = os.listdir(f'{backend_path}/data/{mac}')
+    folder_path = f'{backend_path}/data/{mac}'
+    if not os.path.exists(folder_path) or not os.listdir(folder_path):
+        return {"data": [],"message":"no data available for this machine"} , 200
+    
+    files = os.listdir(folder_path)
     data = []
     for file in files:
         file_path = f'{backend_path}/data/{mac}/{file}'
